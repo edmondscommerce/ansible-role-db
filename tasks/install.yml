@@ -1,0 +1,14 @@
+---
+- name: Enable Percona 8
+  shell: percona-release setup ps80
+
+- name: Install
+  package:
+    name: percona-server-server
+
+- name: SystemD
+  systemd:
+    name: mysqld
+    state: started
+    enabled: yes
+    daemon_reload: yes
