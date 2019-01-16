@@ -10,6 +10,7 @@
     packages:
       - percona-server-server
       - MySQL-python
+      - mytop
 
 - name: MySQL Config
   lineinfile:
@@ -41,17 +42,7 @@
     owner: root
     group: root
     mode: 0600
-#
-#- name: Set new password from temporary password
-#  mysql_user:
-#    name: root
-#    password: "{{ mysql_root_password }}"
-#    encrypted: yes
-#    host: localhost
-#    state: present
-#    login_user: root
-#    login_password: "{{ mysql_root_password_temp.stdout }}"
-#  run_once: true
+
 - name: Update root password
   command: >
     mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_root_password }}';"
@@ -69,3 +60,33 @@
     owner: root
     group: root
     mode: 0600
+
+- name: Setup root mytop
+  copy:
+    content: |
+      user=root
+      pass={{ mysql_root_password }}
+      host=localhost
+      db=information_schema
+      delay=5
+      port=3306
+      batchmode=0
+      header=1
+      color=1
+      idle=1
+    dest: /root/.mytop
+    owner: root
+    group: root
+    mode: 0600
+
+- name: Remove insecure stuff
+  shell: >
+    mysql  -NBe "
+    DELETE FROM mysql.user WHERE User='';
+    DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
+    DROP DATABASE IF EXISTS test;
+    DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';
+    FLUSH PRIVILEGES;
+    "
+    -uroot
+    -p"{{ mysql_root_password }}"

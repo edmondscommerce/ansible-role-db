@@ -1,6 +1,0 @@
----
-- name: Secure
-  script: files/mysqlInstall/02_Secure.bash
-  args:
-    executable: /bin/bash
-    creates: /root/.my.cnf
