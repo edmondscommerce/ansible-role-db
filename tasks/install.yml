@@ -25,41 +25,13 @@
     enabled: yes
     daemon_reload: yes
 
-- name: Find temporary password
-  shell: >
-    echo "$(cat /var/log/mysqld.log | grep temporary | cut -d ' ' -f 13 | xargs)"
-  args:
-    executable: /bin/bash
-  register: mysql_root_password_temp
+- name: Test if can connect as root
+  shell: mysql -NBe "select 1" -u root -p{{ mysql_root_password }}
+  register: can_connect
+  ignore_errors: true
 
-- name: Set /root/.my.cnf with temporary password
-  copy:
-    content: |
-      [client]
-      user=root
-      password="{{ mysql_root_password_temp.stdout }}"
-    dest: /root/.my.cnf
-    owner: root
-    group: root
-    mode: 0600
-
-- name: Update root password
-  command: >
-    mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_root_password }}';"
-    --connect-expired-password
-    -uroot
-    -p"{{ mysql_root_password_temp.stdout }}"
-
-- name: Set /root/my.cnf with actual password
-  copy:
-    content: |
-      [client]
-      user=root
-      password="{{ mysql_root_password }}"
-    dest: /root/.my.cnf
-    owner: root
-    group: root
-    mode: 0600
+- include_tasks: set-root-password.yml
+  when: can_connect is failed
 
 - name: Setup root mytop
   copy:
