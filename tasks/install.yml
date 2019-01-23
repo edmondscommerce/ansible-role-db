@@ -26,7 +26,7 @@
     daemon_reload: yes
 
 - name: Test if can connect as root
-  shell: mysql -NBe "select 1" -u root -p{{ mysql_root_password }}
+  shell: mysql --defaults-file=/root/.my.cnf -NBe "select 1"
   register: can_connect
   ignore_errors: true
 
@@ -53,12 +53,32 @@
 
 - name: Remove insecure stuff
   shell: >
-    mysql  -NBe "
+    mysql
+    --defaults-file=/root/.my.cnf
+    -NBe "
     DELETE FROM mysql.user WHERE User='';
     DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
     DROP DATABASE IF EXISTS test;
     DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';
     FLUSH PRIVILEGES;
     "
-    -uroot
-    -p"{{ mysql_root_password }}"
+
+- name: create databases if not exists
+  shell: >
+    mysql
+    --defaults-file=/root/.my.cnf
+    -e "
+    CREATE DATABASE IF NOT EXISTS "{{ item }}" CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    "
+  with_items: "{{ mysql_databases }}"
+
+- name: Setup MySQL Users
+  shell: >
+    mysql
+    --defaults-file=/root/.my.cnf
+    -e "
+    CREATE USER IF NOT EXISTS '{{ item.name }}'@'{{ item.host }}' IDENTIFIED BY '{{ item.password }}';
+    GRANT ALL on {{ marketing_db_name }}.* TO '{{ item.name }}'@'{{ item.host }}';
+    FLUSH PRIVILEGES;
+    "
+  with_items: "{{ mysql_users }}"

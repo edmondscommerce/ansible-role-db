@@ -2,3 +2,17 @@
 percona_repo_url: "https://repo.percona.com/yum/percona-release-latest.noarch.rpm"
 percona_repo_gpg_key_url: "https://www.percona.com/downloads/RPM-GPG-KEY-percona"
 
+mysql_databases: []
+#  - foo_db_name
+#  - bar_db_name
+
+mysql_users: []
+#  - name: foo
+#    host: "192.%"
+#    password: "{{ vaulted_foo_pass}}"
+#    priv: "{{ foo_db_name }}.*:ALL"
+#  - name: bar
+#    host: "100.100.100.100"
+#    password: "{{ vaulted_bar_pass }}"
+#    priv: "{{ bar_db_name }}.*:ALL"
+
