@@ -78,7 +78,7 @@
     --defaults-file=/root/.my.cnf
     -e "
     CREATE USER IF NOT EXISTS '{{ item.name }}'@'{{ item.host }}' IDENTIFIED BY '{{ item.password }}';
-    GRANT ALL on {{ marketing_db_name }}.* TO '{{ item.name }}'@'{{ item.host }}';
+    GRANT {{ item.grant }} on {{ item.grant_db_tables }} TO '{{ item.name }}'@'{{ item.host }}';
     FLUSH PRIVILEGES;
     "
   with_items: "{{ mysql_users }}"
