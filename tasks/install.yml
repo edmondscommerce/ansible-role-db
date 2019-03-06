@@ -49,6 +49,7 @@
     line: 'disable_log_bin'
     insertafter: '^\[mysqld\]'
     path: /etc/my.cnf
+  when: percona_version >= 8.0
 
 - name: Set InnoDB Buffer Pool to 70% RAM
   lineinfile:
@@ -56,6 +57,7 @@
     line: 'innodb_buffer_pool_size = {{ (ansible_memory_mb.real.total * 0.7)|int }}M'
     insertafter: '^\[mysqld\]'
     path: /etc/my.cnf
+  when: percona_version >= 8.0
 
 - name: Skip Name Resolve
   lineinfile:
@@ -63,6 +65,7 @@
     line: 'skip-name-resolve'
     insertafter: '^\[mysqld\]'
     path: /etc/my.cnf
+  when: percona_version >= 8.0
 
 - name: Setup root mytop
   copy:
