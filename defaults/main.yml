@@ -14,6 +14,7 @@ mysql_databases: []
 #  - foo_db_name
 #  - bar_db_name
 
+
 mysql_users:
 #  - name: username
 #    host: "192.%"
@@ -30,3 +31,7 @@ mysql_users:
 #    password: "{{ username_mysql_pass }}"
 #    grant: "ALL"
 #    grant_db_tables: "{{ platform_db_name}}.*"
+#    password: "{{ vaulted_bar_pass }}"
+#    priv: "{{ bar_db_name }}.*:ALL"
+
+
