@@ -14,13 +14,19 @@ mysql_databases: []
 #  - foo_db_name
 #  - bar_db_name
 
-mysql_users: []
-#  - name: foo
+mysql_users:
+#  - name: username
 #    host: "192.%"
-#    password: "{{ vaulted_foo_pass}}"
-#    priv: "{{ foo_db_name }}.*:ALL"
-#  - name: bar
+#    password: "{{ username_mysql_pass }}"
+#    grant: "ALL"
+#    grant_db_tables: "{{ platform_db_name}}.*"
+#  - name: username
+#    host: "localhost"
+#    password: "{{ username_mysql_pass }}"
+#    grant: "ALL"
+#    grant_db_tables: "{{ platform_db_name}}.*"
+#  - name: username
 #    host: "100.100.100.100"
-#    password: "{{ vaulted_bar_pass }}"
-#    priv: "{{ bar_db_name }}.*:ALL"
-
+#    password: "{{ username_mysql_pass }}"
+#    grant: "ALL"
+#    grant_db_tables: "{{ platform_db_name}}.*"
