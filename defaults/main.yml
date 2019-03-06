@@ -2,6 +2,7 @@
 percona_repo_url: "https://repo.percona.com/yum/percona-release-latest.noarch.rpm"
 percona_repo_gpg_key_url: "https://www.percona.com/downloads/RPM-GPG-KEY-percona"
 percona_version: 8.0
+# TODO:  The names of the packages vary considerably, need to map the percona_version to the correct server package
 percona_repo_package_server:
   - percona-server-server
 

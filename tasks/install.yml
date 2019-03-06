@@ -1,13 +1,13 @@
 ---
 - set_fact:
-    percona_release_name: "{{ percona_version | regex_replace('\.', '') }}"
+    percona_release_name: "{{ percona_version | regex_replace('\\.', '') }}"
 
 - name: Set Percona Release Version
-  shell: "percona-release setup {{percona_repo_release}}"
+  shell: "percona-release setup {{'ps'+percona_release_name}}"
 
 - name: Install Server
   package:
-    name: "{{ 'ps'+percona_release_name }}"
+    name: "{{ percona_repo_package_server }}"
     state: present
 
 - name: Other Packages
@@ -20,7 +20,7 @@
     path: /etc/my.cnf
     line: 'default_authentication_plugin=mysql_native_password'
     state: present
-  when: "{{percona_repo_release }}"
+  when: percona_version >= 8.0
 
 - name: SystemD
   systemd:
