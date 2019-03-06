@@ -1,6 +1,13 @@
 ---
 percona_repo_url: "https://repo.percona.com/yum/percona-release-latest.noarch.rpm"
 percona_repo_gpg_key_url: "https://www.percona.com/downloads/RPM-GPG-KEY-percona"
+percona_version: 8.0
+percona_repo_package_server:
+  - percona-server-server
+
+percona_repo_package_extra:
+  - MySQL-python
+  - mytop
 
 mysql_databases: []
 #  - foo_db_name

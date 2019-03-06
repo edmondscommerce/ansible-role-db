@@ -1,22 +1,26 @@
 ---
-- name: Enable Percona 8
-  shell: percona-release setup ps80
+- set_fact:
+    percona_release_name: "{{ percona_version | regex_replace('\.', '') }}"
 
-- name: Install
+- name: Set Percona Release Version
+  shell: "percona-release setup {{percona_repo_release}}"
+
+- name: Install Server
   package:
-    name: "{{ packages }}"
+    name: "{{ 'ps'+percona_release_name }}"
     state: present
-  vars:
-    packages:
-      - percona-server-server
-      - MySQL-python
-      - mytop
+
+- name: Other Packages
+  package:
+    name: "{{ percona_repo_package_extra | default([]) }}"
+    state: present
 
 - name: MySQL Config
   lineinfile:
     path: /etc/my.cnf
     line: 'default_authentication_plugin=mysql_native_password'
     state: present
+  when: "{{percona_repo_release }}"
 
 - name: SystemD
   systemd:
