@@ -12,26 +12,53 @@
       - MySQL-python
       - mytop
 
+- name: Fix Logrotate
+  copy:
+    dest: /etc/logrotate.d/mysql
+    content: |
+      /var/log/mysqld.log {
+              create 600 mysql mysql
+              notifempty
+              daily
+              rotate 5
+              missingok
+              compress
+          postrotate
+      	# just if mysqld is really running
+      	if test -x /usr/bin/mysqladmin && \
+      	   /usr/bin/mysqladmin ping &>/dev/null
+      	then
+      	   /usr/bin/mysqladmin flush-logs
+      	fi
+          endscript
+      }
+
 - name: MySQL Config
   lineinfile:
     path: /etc/my.cnf
     line: 'default_authentication_plugin=mysql_native_password'
     state: present
 
-- name: SystemD
-  systemd:
-    name: mysqld
-    state: started
-    enabled: yes
-    daemon_reload: yes
+- name: Disable Binary Logging
+  lineinfile:
+    regexp: '^# disable_log_bin'
+    line: 'disable_log_bin'
+    insertafter: '^\[mysqld\]'
+    path: /etc/my.cnf
 
-- name: Test if can connect as root
-  shell: mysql --defaults-file=/root/.my.cnf -NBe "select 1"
-  register: can_connect
-  ignore_errors: true
+- name: Set InnoDB Buffer Pool to 70% RAM
+  lineinfile:
+    regexp: '^# innodb_buffer_pool_size'
+    line: 'innodb_buffer_pool_size = {{ (ansible_memory_mb.real.total * 0.7)|int }}M'
+    insertafter: '^\[mysqld\]'
+    path: /etc/my.cnf
 
-- include_tasks: set-root-password.yml
-  when: can_connect is failed
+- name: Skip Name Resolve
+  lineinfile:
+    regexp: '^skip-name-resolve'
+    line: 'skip-name-resolve'
+    insertafter: '^\[mysqld\]'
+    path: /etc/my.cnf
 
 - name: Setup root mytop
   copy:
@@ -50,6 +77,21 @@
     owner: root
     group: root
     mode: 0600
+
+- name: SystemD
+  systemd:
+    name: mysqld
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: Test if can connect as root
+  shell: mysql --defaults-file=/root/.my.cnf -NBe "select 1"
+  register: can_connect
+  ignore_errors: true
+
+- include_tasks: set-root-password.yml
+  when: can_connect is failed
 
 - name: Remove insecure stuff
   shell: >
@@ -83,44 +125,3 @@
     "
   with_items: "{{ mysql_users }}"
 
-- name: Fix Logrotate
-  copy:
-    dest: /etc/logrotate.d/mysql
-    content: |
-      /var/log/mysqld.log {
-              create 600 mysql mysql
-              notifempty
-              daily
-              rotate 5
-              missingok
-              compress
-          postrotate
-      	# just if mysqld is really running
-      	if test -x /usr/bin/mysqladmin && \
-      	   /usr/bin/mysqladmin ping &>/dev/null
-      	then
-      	   /usr/bin/mysqladmin flush-logs
-      	fi
-          endscript
-      }
-
-- name: Disable Binary Logging
-  lineinfile:
-    regexp: '^# disable_log_bin'
-    line: 'disable_log_bin'
-    insertafter: '^\[mysqld\]'
-    path: /etc/my.cnf
-
-- name: Set InnoDB Buffer Pool to 70% RAM
-  lineinfile:
-    regexp: '^# innodb_buffer_pool_size'
-    line: 'innodb_buffer_pool_size = {{ (ansible_memory_mb.real.total * 0.7)|int }}M'
-    insertafter: '^\[mysqld\]'
-    path: /etc/my.cnf
-
-- name: Skip Name Resolve
-  lineinfile:
-    regexp: '^skip-name-resolve'
-    line: 'skip-name-resolve'
-    insertafter: '^\[mysqld\]'
-    path: /etc/my.cnf
