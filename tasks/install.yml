@@ -1,9 +1,28 @@
 ---
 - set_fact:
     percona_release_name: "{{ percona_version | regex_replace('\\.', '') }}"
+    percona_version_string: "{{ percona_version | string }}"
 
 - name: Set Percona Release Version
   shell: "percona-release setup {{'ps'+percona_release_name}}"
+
+- name: Check for installed Mysql version
+  shell: |
+    mysqld --version 2>/dev/null | grep -Po "(\d+\.\d)" || echo "";
+  register: installed_mysql_version
+
+- debug:
+    msg:
+      - "Current version: {{ installed_mysql_version.stdout }}"
+      - "Desired Version: {{ percona_version_string }}"
+
+- name: Remove Mysql if incorrect version is installed
+  shell: |
+    yum -y remove percona-server* Percona-Server* mysql* MariaDB*
+  when:
+    - installed_mysql_version.stdout != ''
+    - installed_mysql_version.stdout != percona_version_string
+
 
 - name: Install Server
   package:
