@@ -18,6 +18,7 @@
 
 - name: Remove Mysql if incorrect version is installed
   shell: |
+    systemctl stop mysql
     yum -y remove percona-server* Percona-Server* mysql* MariaDB*
   when:
     - installed_mysql_version.stdout != ''
@@ -130,6 +131,10 @@
     DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';
     FLUSH PRIVILEGES;
     "
+
+- name: Run Mysql Upgrade
+  command: mysql_upgrade
+  ignore_errors: true
 
 - name: create databases if not exists
   shell: >
