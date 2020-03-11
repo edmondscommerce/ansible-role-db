@@ -15,7 +15,7 @@ mysql_databases: []
 #  - bar_db_name
 
 
-mysql_users:
+mysql_users: []
 #  - name: username
 #    host: "192.%"
 #    password: "{{ username_mysql_pass }}"
