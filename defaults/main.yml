@@ -5,16 +5,14 @@ percona_version: 8.0
 # TODO:  The names of the packages vary considerably, need to map the percona_version to the correct server package
 percona_repo_package_server:
   - percona-server-server
-
+percona_repo_package_client:
+  - percona-server-client
 percona_repo_package_extra:
   - MySQL-python
   - mytop
-
 mysql_databases: []
 #  - foo_db_name
 #  - bar_db_name
-
-
 mysql_users: []
 #  - name: username
 #    host: "192.%"
@@ -33,5 +31,3 @@ mysql_users: []
 #    grant_db_tables: "{{ platform_db_name}}.*"
 #    password: "{{ vaulted_bar_pass }}"
 #    priv: "{{ bar_db_name }}.*:ALL"
-
-
