@@ -2,20 +2,16 @@
 - set_fact:
     percona_release_name: "{{ percona_version | regex_replace('\\.', '') }}"
     percona_version_string: "{{ percona_version | string }}"
-
 - name: Set Percona Release Version
   shell: "percona-release setup {{'ps'+percona_release_name}}"
-
 - name: Check for installed Mysql version
   shell: |
     mysqld --version 2>/dev/null | grep -Po "(\d+\.\d)" || echo "";
   register: installed_mysql_version
-
 - debug:
     msg:
       - "Current version: {{ installed_mysql_version.stdout }}"
       - "Desired Version: {{ percona_version_string }}"
-
 - name: Remove Mysql if incorrect version is installed
   shell: |
     systemctl stop mysql
@@ -23,18 +19,20 @@
   when:
     - installed_mysql_version.stdout != ''
     - installed_mysql_version.stdout != percona_version_string
-
-
+- name: Install Client
+  package:
+    name: "{{ percona_repo_package_client }}"
+    state: present
+  when: percona_repo_package_client
 - name: Install Server
   package:
     name: "{{ percona_repo_package_server }}"
     state: present
-
+  when: percona_repo_package_server
 - name: Other Packages
   package:
     name: "{{ percona_repo_package_extra | default([]) }}"
     state: present
-
 - name: Fix Logrotate
   copy:
     dest: /etc/logrotate.d/mysql
@@ -55,38 +53,34 @@
       	fi
           endscript
       }
-
+  when: percona_repo_package_server
 - name: MySQL Config
   lineinfile:
     path: /etc/my.cnf
     line: 'default_authentication_plugin=mysql_native_password'
     state: present
-  when: percona_version >= 8.0
-
+  when: percona_version >= 8.0 and percona_repo_package_server
 - name: Disable Binary Logging
   lineinfile:
     regexp: '^# disable_log_bin'
     line: 'disable_log_bin'
     insertafter: '^\[mysqld\]'
     path: /etc/my.cnf
-  when: percona_version >= 8.0
-
+  when: percona_version >= 8.0 and percona_repo_package_server
 - name: Set InnoDB Buffer Pool to 70% RAM
   lineinfile:
     regexp: '^# innodb_buffer_pool_size'
     line: 'innodb_buffer_pool_size = {{ (ansible_memory_mb.real.total * 0.7)|int }}M'
     insertafter: '^\[mysqld\]'
     path: /etc/my.cnf
-  when: percona_version >= 8.0
-
+  when: percona_version >= 8.0 and percona_repo_package_server
 - name: Skip Name Resolve
   lineinfile:
     regexp: '^skip-name-resolve'
     line: 'skip-name-resolve'
     insertafter: '^\[mysqld\]'
     path: /etc/my.cnf
-  when: percona_version >= 8.0
-
+  when: percona_version >= 8.0 and percona_repo_package_server
 - name: Setup root mytop
   copy:
     content: |
@@ -104,22 +98,21 @@
     owner: root
     group: root
     mode: 0600
-
+  when: percona_repo_package_server
 - name: SystemD
   systemd:
     name: mysqld
     state: started
     enabled: yes
     daemon_reload: yes
-
+  when: percona_repo_package_server
 - name: Test if can connect as root
   shell: mysql --defaults-file=/root/.my.cnf -NBe "select 1"
   register: can_connect
   ignore_errors: true
-
+  when: percona_repo_package_server
 - include_tasks: set-root-password.yml
-  when: can_connect is failed
-
+  when: can_connect is failed and percona_repo_package_server
 - name: Remove insecure stuff
   shell: >
     mysql
@@ -131,11 +124,11 @@
     DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';
     FLUSH PRIVILEGES;
     "
-
+  when: percona_repo_package_server
 - name: Run Mysql Upgrade
   command: mysql_upgrade
   ignore_errors: true
-
+  when: percona_repo_package_server
 - name: create databases if not exists
   shell: >
     mysql
@@ -144,7 +137,7 @@
     CREATE DATABASE IF NOT EXISTS "{{ item }}" CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     "
   with_items: "{{ mysql_databases }}"
-
+  when: percona_repo_package_server and mysql_databases
 - name: Setup MySQL Users
   shell: >
     mysql
@@ -155,4 +148,4 @@
     FLUSH PRIVILEGES;
     "
   with_items: "{{ mysql_users }}"
-
+  when: percona_repo_package_server and mysql_users
